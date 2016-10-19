@@ -58,9 +58,18 @@
  */
 @property (nonatomic, assign, readonly) CGFloat totalHeight;
 
+@property (nonatomic, assign) BOOL tagShouldClick;
+
+@property (nonatomic, strong) UIColor * tagSelectedColor;
+
+@property (nonatomic, strong) UIColor * tagUnSelectedColor;
+/*
+ *  控件宽度
+ */
+@property (nonatomic, assign) CGFloat maxWidth;
+
 
 @property (nonatomic, copy) void(^tagClick)(UIButton *tagBtn, NSInteger index);
 
 - (void)showTagsWithDataArr:(NSArray *)arr onView:(UIView *)view;
-
 @end

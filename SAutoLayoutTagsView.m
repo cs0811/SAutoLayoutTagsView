@@ -27,8 +27,17 @@
 
 - (void)showTagsWithDataArr:(NSArray *)arr onView:(UIView *)view {
     _dataArr = arr;
+    [self removeTags];
     [self sizeBtn:arr];
     [view addSubview:self];
+}
+
+- (void)removeTags {
+    for (UIView * view in self.subviews) {
+        if ([view isKindOfClass:[UIButton class]]) {
+            [view removeFromSuperview];
+        }
+    }
 }
 
 - (void)sizeBtn:(NSArray *)arr{
@@ -42,27 +51,39 @@
     CGFloat itemSpaceH = _itemSpaceH?:10;           // 水平间距
     CGFloat itemSpaceV = _itemSpaceV?:5;            // 竖直间距
     
+    if (!_tagSelectedColor) {
+        _tagSelectedColor = [UIColor cyanColor];
+    }
+    
+    if (!_tagUnSelectedColor) {
+        _tagUnSelectedColor = [UIColor whiteColor];
+    }
+    
+    if (_maxWidth<=0) {
+        _maxWidth = kScreenW;
+    }
+    
     //    循环创建数组
-    CGFloat validitySpace = kScreenW-leftSpace-rightSpace;      // 可用的宽度
+    CGFloat validitySpace = _maxWidth-leftSpace-rightSpace;      // 可用的宽度
     UIButton * lastBtn = nil;          // 上一个宽度
-    BOOL shouldBreakLine = NO;          // 是否需要换行
     
     for (int i = 0; i < arr.count; i++) {
         UIButton * sizeBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-        [sizeBtn setBackgroundColor:[UIColor whiteColor]];
-        sizeBtn.layer.borderWidth = 0.5;
+        sizeBtn.userInteractionEnabled = _tagShouldClick;
+        [sizeBtn setBackgroundColor:_tagUnSelectedColor];
+        sizeBtn.layer.borderWidth = 0;
         sizeBtn.layer.borderColor = [UIColor grayColor].CGColor;
-        sizeBtn.layer.cornerRadius = 5;
+        sizeBtn.layer.cornerRadius = 2;
         sizeBtn.layer.masksToBounds = YES;
-        [sizeBtn setTitleColor:[UIColor grayColor] forState:UIControlStateNormal];
-        sizeBtn.titleLabel.font = [UIFont systemFontOfSize:16.0];
+        [sizeBtn setTitleColor:kColorBlack3 forState:UIControlStateNormal];
+        sizeBtn.titleLabel.font = [UIFont defaultFontWithSize:12.0];
         sizeBtn.tag = kTagBase+i;
         sizeBtn.selected = NO;
         
         for (NSString * value in self.tagsStartStatusArr) {
             if ([value isEqual:arr[i]]) {
                 sizeBtn.selected = YES;
-                sizeBtn.backgroundColor = kYellowColor;
+                sizeBtn.backgroundColor = _tagSelectedColor;
             }
         }
         
@@ -71,51 +92,36 @@
         
         [sizeBtn addTarget:self action:@selector(chooseTag:) forControlEvents:UIControlEventTouchUpInside];
         
-        CGSize size = [arr[i] boundingRectWithSize:CGSizeMake(CGFLOAT_MAX, height) options:NSStringDrawingUsesFontLeading | NSStringDrawingTruncatesLastVisibleLine attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:16.]} context:nil].size;
-        size = CGSizeMake(size.width+20, size.height);
+        CGSize size = [arr[i] boundingRectWithSize:CGSizeMake(CGFLOAT_MAX, height) options:NSStringDrawingUsesFontLeading | NSStringDrawingTruncatesLastVisibleLine attributes:@{NSFontAttributeName:[UIFont defaultFontWithSize:12.0]} context:nil].size;
+        size = CGSizeMake(size.width+12, size.height);
         CGRect frame = CGRectZero;
+        
+        
+        validitySpace = _maxWidth-CGRectGetMaxX(lastBtn.frame)-rightSpace-itemSpaceH;
         
         if (!lastBtn) {
             // 第一行 第一个
-            if (size.width >= kScreenW-leftSpace-rightSpace) {
-                size.width = kScreenW-leftSpace-rightSpace;
-                shouldBreakLine = YES;
+            if (size.width >= _maxWidth-leftSpace-rightSpace) {
+                size.width = _maxWidth-leftSpace-rightSpace;
             }
-            shouldBreakLine = NO;
             frame = (CGRect){leftSpace, topSpace, size.width, height};
         }else {
-            if (shouldBreakLine) {
-                if (size.width >= (kScreenW-leftSpace-rightSpace) ) {
-                    size.width = kScreenW-leftSpace-rightSpace;
-                    shouldBreakLine = YES;
+            if (size.width >= validitySpace) {
+                if (size.width >= (_maxWidth-leftSpace-rightSpace) ) {
+                    size.width = _maxWidth-leftSpace-rightSpace;
                 }
-                shouldBreakLine = NO;
                 frame = (CGRect){leftSpace, CGRectGetMaxY(lastBtn.frame)+itemSpaceV, size.width, height};
             }else {
-                if (size.width >= validitySpace) {
-                    if (size.width >= (kScreenW-leftSpace-rightSpace) ) {
-                        size.width = kScreenW-leftSpace-rightSpace;
-                    }
-                    shouldBreakLine = YES;
-                    frame = (CGRect){leftSpace, CGRectGetMaxY(lastBtn.frame)+itemSpaceV, size.width, height};
-                }else {
-                    shouldBreakLine = NO;
-                    frame = (CGRect){CGRectGetMaxX(lastBtn.frame)+itemSpaceH, CGRectGetMinY(lastBtn.frame), size.width, height};
-                }
+                frame = (CGRect){CGRectGetMaxX(lastBtn.frame)+itemSpaceH, CGRectGetMinY(lastBtn.frame), size.width, height};
             }
-        }
-        
-        validitySpace = validitySpace - size.width - itemSpaceH;
-        if (validitySpace <= 0.) {
-            validitySpace = kScreenW-leftSpace-rightSpace;
         }
         
         lastBtn = sizeBtn;
         sizeBtn.frame = frame;
     }
     
-    self.frame = (CGRect){0, 0, kScreenW, CGRectGetMaxY(lastBtn.frame)+bottomSpace};
-    _totalHeight = self.frame.size.height;
+    self.frame = (CGRect){0, 0, _maxWidth, CGRectGetMaxY(lastBtn.frame)+bottomSpace};
+    _totalHeight = CGRectGetMaxY(lastBtn.frame)+bottomSpace;
     _totalLine = (_totalHeight-topSpace-bottomSpace+itemSpaceV)/(itemSpaceV+height);
 }
 
@@ -131,11 +137,11 @@
             UIButton * btn = [self viewWithTag:kTagBase+i];
             if (sender == btn) {
                 btn.selected = YES;
-                btn.backgroundColor = kYellowColor;
+                btn.backgroundColor = _tagSelectedColor;
                 btn.layer.borderWidth = 0;
             }else {
                 btn.selected = NO;
-                btn.backgroundColor = [UIColor whiteColor];
+                btn.backgroundColor = _tagUnSelectedColor;
                 btn.layer.borderWidth = 0.5;
             }
         }
