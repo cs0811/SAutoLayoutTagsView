@@ -71,7 +71,7 @@
         UIButton * sizeBtn = [UIButton buttonWithType:UIButtonTypeCustom];
         sizeBtn.userInteractionEnabled = _tagShouldClick;
         [sizeBtn setBackgroundColor:_tagUnSelectedColor];
-        sizeBtn.layer.borderWidth = 0;
+        sizeBtn.layer.borderWidth = 0.5;
         sizeBtn.layer.borderColor = [UIColor grayColor].CGColor;
         sizeBtn.layer.cornerRadius = 2;
         sizeBtn.layer.masksToBounds = YES;
@@ -84,6 +84,7 @@
             if ([value isEqual:arr[i]]) {
                 sizeBtn.selected = YES;
                 sizeBtn.backgroundColor = _tagSelectedColor;
+                sizeBtn.layer.borderWidth = 0;
             }
         }
         
