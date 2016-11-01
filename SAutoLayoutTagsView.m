@@ -14,6 +14,7 @@
 @implementation SAutoLayoutTagsView
 {
     NSArray * _dataArr;
+    NSMutableArray * _tagsArr;
 }
 
 - (instancetype)init
@@ -27,6 +28,7 @@
 
 - (void)showTagsWithDataArr:(NSArray *)arr onView:(UIView *)view {
     _dataArr = arr;
+    _tagsArr = [NSMutableArray array];
     [self removeTags];
     [self sizeBtn:arr];
     [view addSubview:self];
@@ -71,12 +73,12 @@
         UIButton * sizeBtn = [UIButton buttonWithType:UIButtonTypeCustom];
         sizeBtn.userInteractionEnabled = _tagShouldClick;
         [sizeBtn setBackgroundColor:_tagUnSelectedColor];
-        sizeBtn.layer.borderWidth = 0.5;
-        sizeBtn.layer.borderColor = [UIColor grayColor].CGColor;
-        sizeBtn.layer.cornerRadius = 2;
+        sizeBtn.layer.borderWidth = 1;
+        sizeBtn.layer.borderColor = kColorLine1.CGColor;
+        sizeBtn.layer.cornerRadius = height/2;
         sizeBtn.layer.masksToBounds = YES;
-        [sizeBtn setTitleColor:kColorBlack3 forState:UIControlStateNormal];
-        sizeBtn.titleLabel.font = [UIFont defaultFontWithSize:12.0];
+        [sizeBtn setTitleColor:kColorGray1 forState:UIControlStateNormal];
+        sizeBtn.titleLabel.font = [UIFont defaultFontWithSize:14.0];
         sizeBtn.tag = kTagBase+i;
         sizeBtn.selected = NO;
         
@@ -85,6 +87,8 @@
                 sizeBtn.selected = YES;
                 sizeBtn.backgroundColor = _tagSelectedColor;
                 sizeBtn.layer.borderWidth = 0;
+                [sizeBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+                [_tagsArr addObject:@(i)];
             }
         }
         
@@ -97,6 +101,10 @@
         size = CGSizeMake(size.width+12, size.height);
         CGRect frame = CGRectZero;
         
+        
+        if (_shouldEqualItemWitdh) {
+            size = CGSizeMake(_width?:30, size.height);
+        }
         
         validitySpace = _maxWidth-CGRectGetMaxX(lastBtn.frame)-rightSpace-itemSpaceH;
         
@@ -128,27 +136,55 @@
 
 #pragma mark action
 - (void)chooseTag:(UIButton *)sender {
-    if (self.tagClick) {
-        self.tagClick(sender,sender.tag-1024);
-    }
-    
     if (_resetAllTagWhenSingleClick) {
         // 重置
         for (int i = 0; i<_dataArr.count; i++) {
             UIButton * btn = [self viewWithTag:kTagBase+i];
             if (sender == btn) {
-                btn.selected = YES;
-                btn.backgroundColor = _tagSelectedColor;
-                btn.layer.borderWidth = 0;
+                [self setBtnSelectedStatus:btn];
+                [_tagsArr removeAllObjects];
+                [_tagsArr addObject:@(i)];
             }else {
-                btn.selected = NO;
-                btn.backgroundColor = _tagUnSelectedColor;
-                btn.layer.borderWidth = 0.5;
+                [self setBtnUnSelectedStatus:btn];
             }
         }
     }else {
+        if (sender.selected) {
+            [self setBtnUnSelectedStatus:sender];
+        }else {
+            [self setBtnSelectedStatus:sender];
+        }
         
+        if ([_tagsArr containsObject:@(sender.tag-kTagBase)]) {
+            [_tagsArr removeObject:@(sender.tag-kTagBase)];
+        }else {
+            [_tagsArr addObject:@(sender.tag-kTagBase)];
+        }
     }
+    if (self.tagClick) {
+        self.tagClick(sender,sender.tag-kTagBase);
+    }
+    if (self.tagsArrClick) {
+        self.tagsArrClick(_tagsArr);
+    }
+}
+
+- (NSArray *)tagsIndexArr {
+    return _tagsArr;
+}
+
+- (void)setBtnSelectedStatus:(UIButton *)btn {
+    btn.selected = YES;
+    btn.backgroundColor = _tagSelectedColor;
+    btn.layer.borderWidth = 0;
+    [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+}
+
+- (void)setBtnUnSelectedStatus:(UIButton *)btn {
+    btn.selected = NO;
+    btn.backgroundColor = _tagUnSelectedColor;
+    btn.layer.borderWidth = 1;
+    [btn setTitleColor:kColorGray1 forState:UIControlStateNormal];
 }
 
 @end
