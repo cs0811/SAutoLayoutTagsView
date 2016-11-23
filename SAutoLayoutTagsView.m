@@ -160,6 +160,7 @@
         NSRange hilightRange = [title rangeOfString:hilightTitle];
         if (self.tagHilightTitle && self.tagHilightTitle.length>0 && hilightRange.location != NSNotFound) {
             NSMutableAttributedString * hilightAttribute = [[NSMutableAttributedString alloc] initWithString:title];
+            [hilightAttribute addAttribute:NSForegroundColorAttributeName value:sizeBtn.titleLabel.textColor range:NSMakeRange(0, title.length)];
             [hilightAttribute addAttribute:NSForegroundColorAttributeName value:_item.tagHilightTitleColor range:hilightRange];
             [sizeBtn setAttributedTitle:hilightAttribute forState:UIControlStateNormal];
         }
